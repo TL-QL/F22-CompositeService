@@ -1,7 +1,6 @@
 from flask import Flask, Response, request
 from datetime import datetime
 import json
-from contact_resource import ContactResource
 from flask_cors import CORS
 
 import requests
@@ -65,23 +64,24 @@ def get_composite_by_uid(uid):
     return rsp
 
 
-@app.route("/api/contacts/create/<uid>/<lname>/<fname>/<mname>/<username>/<email>/<e_type>/<phone>/<p_type>/<addr>/<a_type>", methods=["POST"])
+@app.route("/api/composite/create/<uid>/<lname>/<fname>/<mname>/<username>/<email>/<e_type>/<phone>/<p_type>/<addr>/<a_type>", methods=["POST"])
 def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, phone, p_type, addr, a_type):
 
     user_url = user_base_url + "/api/users/create/"+uid+"/"+lname+"/"+fname+"/"+mname+"/"+username
     response = requests.post(user_url)
 
     if response.status_code != 200:
-        rsp = Response("NOT FOUND", status=response.status_code, content_type="text/plain")
+        print(response)
+        rsp = Response("user failed", status=response.status_code, content_type="text/plain")
         return rsp
     
-    contact_url = contacts_base_url + "/api/contacts/create/uid"
+    contact_url = contacts_base_url + "/api/contacts/create/"+uid
     if email != "NaN":
         url = contact_url + "/email/" + email + "/" + e_type
         response = requests.post(url)
 
         if response.status_code != 200:
-            rsp = Response("NOT FOUND", status=response.status_code, content_type="text/plain")
+            rsp = Response("email failed", status=response.status_code, content_type="text/plain")
             return rsp
 
     if phone != "NaN":
@@ -89,7 +89,7 @@ def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, ph
         response = requests.post(url)
 
         if response.status_code != 200:
-            rsp = Response("NOT FOUND", status=response.status_code, content_type="text/plain")
+            rsp = Response("phone failed", status=response.status_code, content_type="text/plain")
             return rsp 
 
     if addr != "NaN":
@@ -97,13 +97,10 @@ def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, ph
         response = requests.post(url)
 
         if response.status_code != 200:
-            rsp = Response("NOT FOUND", status=response.status_code, content_type="text/plain")
+            rsp = Response("addr failed", status=response.status_code, content_type="text/plain")
             return rsp
 
-    result = {
-        "msg": "sucess"
-    }
-    rsp = Response(json.dumps(result), status=200, content_type="application.json")
+    rsp = Response("success", status=200, content_type="application.json")
 
     return rsp
 

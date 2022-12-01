@@ -104,6 +104,56 @@ def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, ph
 
     return rsp
 
+@app.route("/api/composite/delete/<uid>", methods=["POST"])
+def delete_composite_by_uid(uid):
+
+    # delete user
+    user_url = user_base_url + "/api/user/id/"+ uid
+    response = requests.get(user_url)
+
+    if response.status_code != 200:
+        rsp = Response("USER NOT FOUND", status=404, content_type="text/plain")
+        return rsp
+
+    user = response.json()
+
+    user_url = user_base_url + "/api/users/delete/"+uid
+    response = requests.post(user_url)
+    if response.status_code != 200:
+        print(response)
+        rsp = Response("delete user failed", status=response.status_code, content_type="text/plain")
+        return rsp
+
+    # delete contact
+    contacts_url = contacts_base_url + "/api/contacts/id/"+uid
+    response = requests.get(contacts_url)
+    if response.status_code != 200:
+        rsp = Response("NO CONTACT FOR USER", status=200, content_type="text/plain")
+        return rsp
+
+    contacts = response.json()
+
+    for con in contacts:
+        t = con.type
+        k = con.kind
+        url = contacts_base_url + "/delete/" + uid + "/" + t + "/" + k
+        response = requests.post(url)
+
+        if response.status_code != 200:
+            msg = "delete " + t + " and " + k + " failed"
+            rsp = Response(msg, status=response.status_code, content_type="text/plain")
+            return rsp
+
+
+    rsp = Response("success", status=200, content_type="application.json")
+
+    return rsp
+
+
+
+
+
+
 # @app.route("/api/contacts/update/<uid>/<type>/<contact>/<kind>", methods=["PUT"])
 # def update_contacts_by_uid(uid, type, contact, kind):
 

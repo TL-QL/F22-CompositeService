@@ -64,11 +64,14 @@ def get_composite_by_uid(uid):
     return rsp
 
 
-@app.route("/api/composite/create/<uid>/<lname>/<fname>/<mname>/<username>/<email>/<e_type>/<phone>/<p_type>/<addr>/<a_type>", methods=["POST"])
-def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, phone, p_type, addr, a_type):
+@app.route("/api/composite/create/<uid>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
+def create_contacts_by_uid(uid, lname, fname, mname, username):
 
     user_url = user_base_url + "/api/users/create/"+uid+"/"+lname+"/"+fname+"/"+mname+"/"+username
     response = requests.post(user_url)
+
+    args = request.args
+    contacts = args.contacts
 
     if response.status_code != 200:
         print(response)
@@ -76,28 +79,12 @@ def create_contacts_by_uid(uid, lname, fname, mname, username, email, e_type, ph
         return rsp
     
     contact_url = contacts_base_url + "/api/contacts/create/"+uid
-    if email != "NaN":
-        url = contact_url + "/email/" + email + "/" + e_type
+    for contact in contacts:
+        url = contact_url+"/"+contact.type+"/"+contact.contact+"/"+contact.kind
         response = requests.post(url)
-
         if response.status_code != 200:
-            rsp = Response("email failed", status=response.status_code, content_type="text/plain")
-            return rsp
-
-    if phone != "NaN":
-        url = contact_url + "/phone/" + phone + "/" + p_type
-        response = requests.post(url)
-
-        if response.status_code != 200:
-            rsp = Response("phone failed", status=response.status_code, content_type="text/plain")
-            return rsp 
-
-    if addr != "NaN":
-        url = contact_url + "/addresse/" + addr + "/" + a_type
-        response = requests.post(url)
-
-        if response.status_code != 200:
-            rsp = Response("addr failed", status=response.status_code, content_type="text/plain")
+            msg = contact.type +" "+contact.kind+ " failed"
+            rsp = Response(msg, status=response.status_code, content_type="text/plain")
             return rsp
 
     rsp = Response("success", status=200, content_type="application.json")

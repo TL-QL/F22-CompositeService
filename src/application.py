@@ -102,8 +102,6 @@ def delete_composite_by_uid(uid):
         rsp = Response("USER NOT FOUND", status=404, content_type="text/plain")
         return rsp
 
-    user = response.json()
-
     user_url = user_base_url + "/api/users/delete/"+uid
     response = requests.post(user_url)
     if response.status_code != 200:
@@ -115,7 +113,7 @@ def delete_composite_by_uid(uid):
     contacts_url = contacts_base_url + "/api/contacts/id/"+uid
     response = requests.get(contacts_url)
     if response.status_code != 200:
-        rsp = Response("NO CONTACT FOR USER", status=200, content_type="text/plain")
+        rsp = Response("SUCCESS -- NO CONTACT FOR USER", status=200, content_type="text/plain")
         return rsp
 
     contacts = response.json()
@@ -133,10 +131,51 @@ def delete_composite_by_uid(uid):
 
 
     rsp = Response("success", status=200, content_type="application.json")
-
     return rsp
 
 
+@app.route("/api/composite/update/<uid>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
+def update_contacts_by_uid(uid, lname, fname, mname, username):
+
+    user_url = user_base_url + "/api/users/update/"+uid+"/"+lname+"/"+fname+"/"+mname+"/"+username
+    response = requests.post(user_url)
+
+    if response.status_code != 200:
+        print(response)
+        rsp = Response("update user failed", status=response.status_code, content_type="text/plain")
+        return rsp
+    
+    args = request.args
+    input_contact = args.contacts
+
+    # delete contact
+    delete_url = contacts_base_url + "/api/contacts/id/"+uid
+    response = requests.get(delete_url)
+    
+    if response.status_code == 200:
+        contacts = response.json()
+        for con in contacts:
+            t = con.type
+            k = con.kind
+            url = contacts_base_url + "/delete/" + uid + "/" + t + "/" + k
+            response = requests.post(url)
+
+            if response.status_code != 200:
+                msg = "delete " + t + " and " + k + " failed"
+                rsp = Response(msg, status=response.status_code, content_type="text/plain")
+                return rsp
+
+    contact_url = contacts_base_url + "/api/contacts/create/"+uid
+    for contact in input_contact:
+        url = contact_url+"/"+contact.type+"/"+contact.contact+"/"+contact.kind
+        response = requests.post(url)
+        if response.status_code != 200:
+            msg = contact.type +" "+contact.kind+ " failed"
+            rsp = Response(msg, status=response.status_code, content_type="text/plain")
+            return rsp
+
+    rsp = Response("success", status=200, content_type="application.json")
+    return rsp
 
 
 

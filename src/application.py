@@ -96,7 +96,7 @@ def create_contacts_by_uid(uid, lname, fname, mname, username):
 def delete_composite_by_uid(uid, username):
 
     # delete user
-    user_url = user_base_url + "/api/user/id/"+ uid
+    user_url = user_base_url + "/api/users/id/"+ uid
     response = requests.get(user_url)
 
     if response.status_code != 200:
@@ -120,10 +120,10 @@ def delete_composite_by_uid(uid, username):
     contacts = response.json()
 
     for con in contacts:
-        t = con.type
-        k = con.kind
-        url = contacts_base_url + "/delete/" + username + "/" + t + "/" + k
-        response = requests.post(url)
+        t = con.get("type")
+        k = con.get("kind")
+        url = contacts_base_url + "/api/contacts/delete/" + username + "/" + t + "/" + k
+        response = requests.delete(url)
 
         if response.status_code != 200:
             msg = "delete " + t + " and " + k + " failed"
@@ -147,7 +147,7 @@ def update_contacts_by_uid(uid, lname, fname, mname, username):
         return rsp
     
     args = request.args
-    input_contact = args.contacts
+    input_contact = args.getlist('contact')
 
     # delete contact
     delete_url = contacts_base_url + "/api/contacts/id/"+username
@@ -156,10 +156,10 @@ def update_contacts_by_uid(uid, lname, fname, mname, username):
     if response.status_code == 200:
         contacts = response.json()
         for con in contacts:
-            t = con.type
-            k = con.kind
-            url = contacts_base_url + "/delete/" + username + "/" + t + "/" + k
-            response = requests.post(url)
+            t = con.get("type")
+            k = con.get("kind")
+            url = contacts_base_url + "/api/contacts/delete/" + username + "/" + t + "/" + k
+            response = requests.delete(url)
 
             if response.status_code != 200:
                 msg = "delete " + t + " and " + k + " failed"
@@ -168,10 +168,11 @@ def update_contacts_by_uid(uid, lname, fname, mname, username):
 
     contact_url = contacts_base_url + "/api/contacts/create/"+username
     for contact in input_contact:
-        url = contact_url+"/"+contact.type+"/"+contact.contact+"/"+contact.kind
+        contact = json.loads(contact)
+        url = contact_url+"/"+contact.get("type")+"/"+contact.get("contact")+"/"+contact.get("kind")
         response = requests.post(url)
         if response.status_code != 200:
-            msg = contact.type +" "+contact.kind+ " failed"
+            msg = contact.get("type") +" "+contact.get("kind")+ " failed"
             rsp = Response(msg, status=response.status_code, content_type="text/plain")
             return rsp
 

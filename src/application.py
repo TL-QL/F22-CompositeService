@@ -10,8 +10,8 @@ app = Flask(__name__)
 
 CORS(app)
 
-user_base_url = 'http://6156usermicroservicerdsversion3-env.eba-w9idegim.us-east-1.elasticbeanstalk.com'
-contacts_base_url = 'http://54.242.126.44:5011'
+user_base_url = 'http://6156usermicroserviceversion1-env.eba-hzmwy7da.us-east-1.elasticbeanstalk.com'
+contacts_base_url = 'http://35.172.211.153:5011'
 
 
 @app.get("/api/health")
@@ -29,10 +29,10 @@ def get_health():
     return result
 
 
-@app.route("/api/composite/username/<username>", methods=["GET"])
-def get_composite_by_username(username):
+@app.route("/api/composite/email/<email>", methods=["GET"])
+def get_composite_by_username(email):
 
-    user_url = user_base_url + "/api/users/username/"+ username
+    user_url = user_base_url + "/api/users/email/"+ email
     response = requests.get(user_url)
 
     if response.status_code != 200:
@@ -41,7 +41,7 @@ def get_composite_by_username(username):
 
     user = response.json()
 
-    contacts_url = contacts_base_url + "/api/contacts/id/"+user.get("username")
+    contacts_url = contacts_base_url + "/api/contacts/id/"+user.get("email")
     response = requests.get(contacts_url)
 
     if response.status_code != 200:
@@ -64,13 +64,13 @@ def get_composite_by_username(username):
     return rsp
 
 
-@app.route("/api/composite/create/<uid>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
-def create_contacts_by_uid(uid, lname, fname, mname, username):
+@app.route("/api/composite/create/<email>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
+def create_contacts_by_uid(email, lname, fname, mname, username):
 
     args = request.args
     contacts = args.getlist('contact')
 
-    user_url = user_base_url + "/api/users/create/"+uid+"/"+lname+"/"+fname+"/"+mname+"/"+username
+    user_url = user_base_url + "/api/users/update/"+email+"/"+lname+"/"+fname+"/"+mname+"/"+username
     response = requests.post(user_url)
 
     if response.status_code != 200:
@@ -78,7 +78,14 @@ def create_contacts_by_uid(uid, lname, fname, mname, username):
         rsp = Response("user failed", status=response.status_code, content_type="text/plain")
         return rsp
     
-    contact_url = contacts_base_url + "/api/contacts/create/"+username
+    contact_url = contacts_base_url + "/api/contacts/create/"+email
+    if len(contacts) == 0:
+        url = contact_url+"/"+"email"+"/"+email+"/"+"personal"
+        response = requests.post(url)
+        if response.status_code != 200:
+            msg = "Add default email failed"
+            rsp = Response(msg, status=response.status_code, content_type="text/plain")
+            return rsp
     for contact in contacts:
         contact = json.loads(contact)
         url = contact_url+"/"+contact.get("type")+"/"+contact.get("contact")+"/"+contact.get("kind")
@@ -92,18 +99,18 @@ def create_contacts_by_uid(uid, lname, fname, mname, username):
 
     return rsp
 
-@app.route("/api/composite/delete/<uid>/<username>", methods=["POST"])
-def delete_composite_by_uid(uid, username):
+@app.route("/api/composite/delete/<email>", methods=["POST"])
+def delete_composite_by_uid(email):
 
     # delete user
-    user_url = user_base_url + "/api/users/id/"+ uid
+    user_url = user_base_url + "/api/users/email/"+ email
     response = requests.get(user_url)
 
     if response.status_code != 200:
         rsp = Response("USER NOT FOUND", status=404, content_type="text/plain")
         return rsp
 
-    user_url = user_base_url + "/api/users/delete/"+uid
+    user_url = user_base_url + "/api/users/delete/"+email
     response = requests.post(user_url)
     if response.status_code != 200:
         print(response)
@@ -111,7 +118,7 @@ def delete_composite_by_uid(uid, username):
         return rsp
 
     # delete contact
-    contacts_url = contacts_base_url + "/api/contacts/id/"+username
+    contacts_url = contacts_base_url + "/api/contacts/id/"+email
     response = requests.get(contacts_url)
     if response.status_code != 200:
         rsp = Response("SUCCESS -- NO CONTACT FOR USER", status=200, content_type="text/plain")
@@ -120,10 +127,10 @@ def delete_composite_by_uid(uid, username):
     contacts = response.json()
 
     for con in contacts:
-        t = con.get("type")
-        k = con.get("kind")
-        url = contacts_base_url + "/api/contacts/delete/" + username + "/" + t + "/" + k
-        response = requests.delete(url)
+        t = con.type
+        k = con.kind
+        url = contacts_base_url + "/delete/" + email + "/" + t + "/" + k
+        response = requests.post(url)
 
         if response.status_code != 200:
             msg = "delete " + t + " and " + k + " failed"
@@ -135,10 +142,10 @@ def delete_composite_by_uid(uid, username):
     return rsp
 
 
-@app.route("/api/composite/update/<uid>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
-def update_contacts_by_uid(uid, lname, fname, mname, username):
+@app.route("/api/composite/update/<email>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
+def update_contacts_by_uid(email, lname, fname, mname, username):
 
-    user_url = user_base_url + "/api/users/update/"+uid+"/"+lname+"/"+fname+"/"+mname+"/"+username
+    user_url = user_base_url + "/api/users/update/"+email+"/"+lname+"/"+fname+"/"+mname+"/"+username
     response = requests.post(user_url)
 
     if response.status_code != 200:
@@ -150,23 +157,23 @@ def update_contacts_by_uid(uid, lname, fname, mname, username):
     input_contact = args.getlist('contact')
 
     # delete contact
-    delete_url = contacts_base_url + "/api/contacts/id/"+username
+    delete_url = contacts_base_url + "/api/contacts/id/"+email
     response = requests.get(delete_url)
     
     if response.status_code == 200:
         contacts = response.json()
         for con in contacts:
-            t = con.get("type")
-            k = con.get("kind")
-            url = contacts_base_url + "/api/contacts/delete/" + username + "/" + t + "/" + k
-            response = requests.delete(url)
+            t = con.type
+            k = con.kind
+            url = contacts_base_url + "/delete/" + email + "/" + t + "/" + k
+            response = requests.post(url)
 
             if response.status_code != 200:
                 msg = "delete " + t + " and " + k + " failed"
                 rsp = Response(msg, status=response.status_code, content_type="text/plain")
                 return rsp
 
-    contact_url = contacts_base_url + "/api/contacts/create/"+username
+    contact_url = contacts_base_url + "/api/contacts/create/"+email
     for contact in input_contact:
         contact = json.loads(contact)
         url = contact_url+"/"+contact.get("type")+"/"+contact.get("contact")+"/"+contact.get("kind")

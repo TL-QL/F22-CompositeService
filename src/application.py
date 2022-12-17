@@ -30,7 +30,7 @@ def get_health():
 
 
 @app.route("/api/composite/email/<email>", methods=["GET"])
-def get_composite_by_username(email):
+def get_composite_by_email(email):
 
     user_url = user_base_url + "/api/users/email/"+ email
     response = requests.get(user_url)
@@ -65,7 +65,7 @@ def get_composite_by_username(email):
 
 
 @app.route("/api/composite/create/<email>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
-def create_contacts_by_uid(email, lname, fname, mname, username):
+def create_contacts_by_email(email, lname, fname, mname, username):
 
     args = request.args
     contacts = args.getlist('contact')
@@ -100,7 +100,7 @@ def create_contacts_by_uid(email, lname, fname, mname, username):
     return rsp
 
 @app.route("/api/composite/delete/<email>", methods=["POST"])
-def delete_composite_by_uid(email):
+def delete_composite_by_email(email):
 
     # delete user
     user_url = user_base_url + "/api/users/email/"+ email
@@ -127,10 +127,10 @@ def delete_composite_by_uid(email):
     contacts = response.json()
 
     for con in contacts:
-        t = con.type
-        k = con.kind
-        url = contacts_base_url + "/delete/" + email + "/" + t + "/" + k
-        response = requests.post(url)
+        t = con.get("type")
+        k = con.get("kind")
+        url = contacts_base_url + "/api/contacts/delete/" + email + "/" + t + "/" + k
+        response = requests.delete(url)
 
         if response.status_code != 200:
             msg = "delete " + t + " and " + k + " failed"
@@ -143,7 +143,7 @@ def delete_composite_by_uid(email):
 
 
 @app.route("/api/composite/update/<email>/<lname>/<fname>/<mname>/<username>", methods=["POST"])
-def update_contacts_by_uid(email, lname, fname, mname, username):
+def update_contacts_by_email(email, lname, fname, mname, username):
 
     user_url = user_base_url + "/api/users/update/"+email+"/"+lname+"/"+fname+"/"+mname+"/"+username
     response = requests.post(user_url)
@@ -163,10 +163,11 @@ def update_contacts_by_uid(email, lname, fname, mname, username):
     if response.status_code == 200:
         contacts = response.json()
         for con in contacts:
-            t = con.type
-            k = con.kind
-            url = contacts_base_url + "/delete/" + email + "/" + t + "/" + k
-            response = requests.post(url)
+            t = con.get("type")
+            k = con.get("kind")
+            url = contacts_base_url + "/api/contacts/delete/" + email + "/" + t + "/" + k
+            print(url)
+            response = requests.delete(url)
 
             if response.status_code != 200:
                 msg = "delete " + t + " and " + k + " failed"

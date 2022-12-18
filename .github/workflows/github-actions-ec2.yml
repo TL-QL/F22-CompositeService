@@ -14,9 +14,6 @@ jobs:
     steps:
       - name: Checkout the files
         uses: actions/checkout@v2
-      
-      - name: switch to sudo mode
-        run: sudo su
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main

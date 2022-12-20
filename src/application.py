@@ -13,8 +13,8 @@ CORS(app)
 # user_base_url = 'http://6156usermicroserviceversion1-env.eba-hzmwy7da.us-east-1.elasticbeanstalk.com'
 # contacts_base_url = 'http://35.172.211.153:5011'
 api_url = 'https://93dqximkq0.execute-api.us-east-1.amazonaws.com'
-user_base_url = api_url + '/users'
-contacts_base_url = api_url + '/contacts'
+user_base_url = api_url
+contacts_base_url = api_url
 
 
 @app.get("/api/health")
